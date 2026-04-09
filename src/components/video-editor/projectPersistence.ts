@@ -54,6 +54,7 @@ export interface ProjectEditorState {
 	webcamMaskShape: WebcamMaskShape;
 	webcamSizePreset: WebcamSizePreset;
 	webcamPosition: WebcamPosition | null;
+	cursorHighlightEnabled: boolean;
 	exportQuality: ExportQuality;
 	exportFormat: ExportFormat;
 	gifFrameRate: GifFrameRate;
@@ -379,6 +380,8 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 						cy: clamp((editor.webcamPosition as WebcamPosition).cy, 0, 1),
 					}
 				: DEFAULT_WEBCAM_POSITION,
+		cursorHighlightEnabled:
+			typeof editor.cursorHighlightEnabled === "boolean" ? editor.cursorHighlightEnabled : false,
 		exportQuality:
 			editor.exportQuality === "medium" || editor.exportQuality === "source"
 				? editor.exportQuality

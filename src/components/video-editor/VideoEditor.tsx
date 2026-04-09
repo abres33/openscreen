@@ -100,6 +100,7 @@ export default function VideoEditor() {
 		webcamMaskShape,
 		webcamSizePreset,
 		webcamPosition,
+		cursorHighlightEnabled,
 	} = editorState;
 
 	// ── Non-undoable state
@@ -218,6 +219,7 @@ export default function VideoEditor() {
 				webcamMaskShape: normalizedEditor.webcamMaskShape,
 				webcamSizePreset: normalizedEditor.webcamSizePreset,
 				webcamPosition: normalizedEditor.webcamPosition,
+				cursorHighlightEnabled: normalizedEditor.cursorHighlightEnabled,
 			});
 			setExportQuality(normalizedEditor.exportQuality);
 			setExportFormat(normalizedEditor.exportFormat);
@@ -285,6 +287,7 @@ export default function VideoEditor() {
 			webcamLayoutPreset,
 			webcamMaskShape,
 			webcamPosition,
+			cursorHighlightEnabled,
 			exportQuality,
 			exportFormat,
 			gifFrameRate,
@@ -309,6 +312,7 @@ export default function VideoEditor() {
 		webcamMaskShape,
 		webcamSizePreset,
 		webcamPosition,
+		cursorHighlightEnabled,
 		exportQuality,
 		exportFormat,
 		gifFrameRate,
@@ -430,6 +434,7 @@ export default function VideoEditor() {
 				webcamMaskShape,
 				webcamSizePreset,
 				webcamPosition,
+				cursorHighlightEnabled,
 				exportQuality,
 				exportFormat,
 				gifFrameRate,
@@ -486,6 +491,7 @@ export default function VideoEditor() {
 			webcamMaskShape,
 			webcamSizePreset,
 			webcamPosition,
+			cursorHighlightEnabled,
 			exportQuality,
 			exportFormat,
 			gifFrameRate,
@@ -1227,6 +1233,7 @@ export default function VideoEditor() {
 						previewWidth,
 						previewHeight,
 						cursorTelemetry,
+						cursorHighlightEnabled,
 						onProgress: (progress: ExportProgress) => {
 							setExportProgress(progress);
 						},
@@ -1361,6 +1368,7 @@ export default function VideoEditor() {
 						previewWidth,
 						previewHeight,
 						cursorTelemetry,
+						cursorHighlightEnabled,
 						onProgress: (progress: ExportProgress) => {
 							setExportProgress(progress);
 						},
@@ -1432,6 +1440,7 @@ export default function VideoEditor() {
 			exportQuality,
 			handleExportSaved,
 			cursorTelemetry,
+			cursorHighlightEnabled,
 		],
 	);
 
@@ -1681,6 +1690,7 @@ export default function VideoEditor() {
 											onAnnotationPositionChange={handleAnnotationPositionChange}
 											onAnnotationSizeChange={handleAnnotationSizeChange}
 											cursorTelemetry={cursorTelemetry}
+											cursorHighlightEnabled={cursorHighlightEnabled}
 										/>
 									</div>
 								</div>
@@ -1804,6 +1814,8 @@ export default function VideoEditor() {
 						webcamSizePreset={webcamSizePreset}
 						onWebcamSizePresetChange={(v) => updateState({ webcamSizePreset: v })}
 						onWebcamSizePresetCommit={commitState}
+						cursorHighlightEnabled={cursorHighlightEnabled}
+						onCursorHighlightChange={(v) => pushState({ cursorHighlightEnabled: v })}
 						videoElement={videoPlaybackRef.current?.video || null}
 						exportQuality={exportQuality}
 						onExportQualityChange={setExportQuality}

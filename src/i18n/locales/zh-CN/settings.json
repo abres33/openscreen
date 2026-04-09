@@ -32,6 +32,7 @@
 	"effects": {
 		"title": "视频效果",
 		"blurBg": "模糊背景",
+		"cursorHighlight": "光标高亮",
 		"motionBlur": "运动模糊",
 		"off": "关",
 		"shadow": "阴影",

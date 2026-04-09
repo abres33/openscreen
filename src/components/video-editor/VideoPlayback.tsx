@@ -35,6 +35,8 @@ import {
 import { AnnotationOverlay } from "./AnnotationOverlay";
 import {
 	type AnnotationRegion,
+	CURSOR_HIGHLIGHT_COLOR,
+	CURSOR_HIGHLIGHT_RADIUS,
 	type SpeedRegion,
 	type TrimRegion,
 	ZOOM_DEPTH_SCALES,
@@ -50,7 +52,11 @@ import {
 	ZOOM_SCALE_DEADZONE,
 	ZOOM_TRANSLATION_DEADZONE_PX,
 } from "./videoPlayback/constants";
-import { adaptiveSmoothFactor, smoothCursorFocus } from "./videoPlayback/cursorFollowUtils";
+import {
+	adaptiveSmoothFactor,
+	interpolateCursorAt,
+	smoothCursorFocus,
+} from "./videoPlayback/cursorFollowUtils";
 import { clampFocusToStage as clampFocusToStageUtil } from "./videoPlayback/focusUtils";
 import { layoutVideoContent as layoutVideoContentUtil } from "./videoPlayback/layoutUtils";
 import { clamp01 } from "./videoPlayback/mathUtils";
@@ -102,6 +108,7 @@ interface VideoPlaybackProps {
 	onAnnotationPositionChange?: (id: string, position: { x: number; y: number }) => void;
 	onAnnotationSizeChange?: (id: string, size: { width: number; height: number }) => void;
 	cursorTelemetry?: import("./types").CursorTelemetryPoint[];
+	cursorHighlightEnabled?: boolean;
 }
 
 export interface VideoPlaybackRef {
@@ -153,6 +160,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			onAnnotationPositionChange,
 			onAnnotationSizeChange,
 			cursorTelemetry = [],
+			cursorHighlightEnabled = false,
 		},
 		ref,
 	) => {
@@ -212,6 +220,8 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		const videoReadyRafRef = useRef<number | null>(null);
 		const smoothedAutoFocusRef = useRef<ZoomFocus | null>(null);
 		const prevTargetProgressRef = useRef(0);
+		const cursorHighlightRef = useRef<Graphics | null>(null);
+		const cursorHighlightEnabledRef = useRef(cursorHighlightEnabled);
 
 		const clampFocusToStage = useCallback((focus: ZoomFocus, depth: ZoomDepth) => {
 			return clampFocusToStageUtil(focus, depth, stageSizeRef.current);
@@ -490,6 +500,10 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		}, [cursorTelemetry]);
 
 		useEffect(() => {
+			cursorHighlightEnabledRef.current = cursorHighlightEnabled;
+		}, [cursorHighlightEnabled]);
+
+		useEffect(() => {
 			selectedZoomIdRef.current = selectedZoomId;
 		}, [selectedZoomId]);
 
@@ -677,6 +691,13 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				videoContainerRef.current = videoContainer;
 				cameraContainer.addChild(videoContainer);
 
+				// Cursor highlight circle — added to stage so it renders above
+				// cameraContainer (post-zoom) and stays at a fixed screen size.
+				const highlightGfx = new Graphics();
+				highlightGfx.visible = false;
+				cursorHighlightRef.current = highlightGfx;
+				app.stage.addChild(highlightGfx);
+
 				setPixiReady(true);
 			})();
 
@@ -694,6 +715,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				cameraContainerRef.current = null;
 				videoContainerRef.current = null;
 				videoSpriteRef.current = null;
+				cursorHighlightRef.current = null;
 			};
 		}, []);
 
@@ -1031,6 +1053,60 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 					motionIntensity,
 					motionVector,
 				);
+
+				// ── Cursor highlight circle ──
+				const hlGfx = cursorHighlightRef.current;
+				if (hlGfx) {
+					if (!cursorHighlightEnabledRef.current || cursorTelemetryRef.current.length === 0) {
+						hlGfx.visible = false;
+					} else {
+						const cursorPos = interpolateCursorAt(
+							cursorTelemetryRef.current,
+							currentTimeRef.current,
+						);
+						if (!cursorPos) {
+							hlGfx.visible = false;
+						} else {
+							hlGfx.visible = true;
+							// Map normalised cursor (0-1) → videoContainer local coords
+							const sprite = videoSpriteRef.current;
+							const vc = videoContainerRef.current;
+							const cc = cameraContainerRef.current;
+							if (sprite && vc && cc) {
+								const localX = cursorPos.cx * sprite.width + sprite.x;
+								const localY = cursorPos.cy * sprite.height + sprite.y;
+								// videoContainer → cameraContainer local
+								const camX = localX + vc.x;
+								const camY = localY + vc.y;
+								// cameraContainer → stage (apply zoom transform)
+								const stageX = camX * cc.scale.x + cc.x;
+								const stageY = camY * cc.scale.y + cc.y;
+
+								const r = CURSOR_HIGHLIGHT_RADIUS;
+								// Parse hex colour once (using constant)
+								const hex = CURSOR_HIGHLIGHT_COLOR;
+								const rr = Number.parseInt(hex.slice(1, 3), 16);
+								const gg = Number.parseInt(hex.slice(3, 5), 16);
+								const bb = Number.parseInt(hex.slice(5, 7), 16);
+
+								hlGfx.clear();
+								// Filled circle
+								hlGfx.circle(stageX, stageY, r);
+								hlGfx.fill({
+									color: (rr << 16) | (gg << 8) | bb,
+									alpha: 0.15,
+								});
+								// Ring stroke
+								hlGfx.circle(stageX, stageY, r);
+								hlGfx.stroke({
+									color: (rr << 16) | (gg << 8) | bb,
+									alpha: 0.45,
+									width: 2,
+								});
+							}
+						}
+					}
+				}
 			};
 
 			app.ticker.add(ticker);

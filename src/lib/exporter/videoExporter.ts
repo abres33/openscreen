@@ -40,6 +40,7 @@ interface VideoExporterConfig extends ExportConfig {
 	previewWidth?: number;
 	previewHeight?: number;
 	cursorTelemetry?: import("@/components/video-editor/types").CursorTelemetryPoint[];
+	cursorHighlightEnabled?: boolean;
 	onProgress?: (progress: ExportProgress) => void;
 }
 
@@ -146,6 +147,7 @@ export class VideoExporter {
 				previewWidth: this.config.previewWidth,
 				previewHeight: this.config.previewHeight,
 				cursorTelemetry: this.config.cursorTelemetry,
+				cursorHighlightEnabled: this.config.cursorHighlightEnabled,
 			});
 			this.renderer = renderer;
 			await renderer.initialize();

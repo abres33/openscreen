@@ -29,6 +29,7 @@
 	"effects": {
 		"title": "Effets vidéo",
 		"blurBg": "Flou arrière-plan",
+		"cursorHighlight": "Surbrillance curseur",
 		"motionBlur": "Flou de mouvement",
 		"off": "désactivé",
 		"shadow": "Ombre",

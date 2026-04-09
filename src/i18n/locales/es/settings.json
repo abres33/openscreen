@@ -32,6 +32,7 @@
 	"effects": {
 		"title": "Efectos de video",
 		"blurBg": "Desenfocar fondo",
+		"cursorHighlight": "Resaltar cursor",
 		"motionBlur": "Desenfoque de movimiento",
 		"off": "desactivado",
 		"shadow": "Sombra",

@@ -32,6 +32,7 @@
 	"effects": {
 		"title": "Video Effects",
 		"blurBg": "Blur BG",
+		"cursorHighlight": "Cursor Highlight",
 		"motionBlur": "Motion Blur",
 		"off": "off",
 		"shadow": "Shadow",

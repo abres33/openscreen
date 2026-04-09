@@ -29,6 +29,7 @@
 	"effects": {
 		"title": "Video Efektleri",
 		"blurBg": "Arka Planı Bulanıklaştır",
+		"cursorHighlight": "İmleç Vurgusu",
 		"motionBlur": "Hareket Bulanıklığı",
 		"off": "kapalı",
 		"shadow": "Gölge",

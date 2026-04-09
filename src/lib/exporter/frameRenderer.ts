@@ -17,7 +17,11 @@ import type {
 	ZoomDepth,
 	ZoomRegion,
 } from "@/components/video-editor/types";
-import { ZOOM_DEPTH_SCALES } from "@/components/video-editor/types";
+import {
+	CURSOR_HIGHLIGHT_COLOR,
+	CURSOR_HIGHLIGHT_RADIUS,
+	ZOOM_DEPTH_SCALES,
+} from "@/components/video-editor/types";
 import {
 	AUTO_FOLLOW_RAMP_DISTANCE,
 	AUTO_FOLLOW_SMOOTHING_FACTOR,
@@ -28,6 +32,7 @@ import {
 } from "@/components/video-editor/videoPlayback/constants";
 import {
 	adaptiveSmoothFactor,
+	interpolateCursorAt,
 	smoothCursorFocus,
 } from "@/components/video-editor/videoPlayback/cursorFollowUtils";
 import { clampFocusToStage as clampFocusToStageUtil } from "@/components/video-editor/videoPlayback/focusUtils";
@@ -78,6 +83,7 @@ interface FrameRenderConfig {
 	previewWidth?: number;
 	previewHeight?: number;
 	cursorTelemetry?: import("@/components/video-editor/types").CursorTelemetryPoint[];
+	cursorHighlightEnabled?: boolean;
 }
 
 interface AnimationState {
@@ -411,6 +417,20 @@ export class FrameRenderer {
 		// Composite with shadows to final output canvas
 		this.compositeWithShadows(webcamFrame);
 
+		// Render cursor highlight circle
+		if (
+			this.config.cursorHighlightEnabled &&
+			this.config.cursorTelemetry &&
+			this.config.cursorTelemetry.length > 0 &&
+			this.compositeCtx &&
+			this.layoutCache
+		) {
+			const cursorPos = interpolateCursorAt(this.config.cursorTelemetry, timeMs);
+			if (cursorPos) {
+				this.renderCursorHighlight(cursorPos.cx, cursorPos.cy, timeMs);
+			}
+		}
+
 		// Render annotations on top if present
 		if (
 			this.config.annotationRegions &&
@@ -722,6 +742,72 @@ export class FrameRenderer {
 		this.rasterCtx.putImageData(imageData, 0, 0);
 
 		return this.rasterCanvas;
+	}
+
+	private renderCursorHighlight(cx: number, cy: number, _timeMs: number): void {
+		const ctx = this.compositeCtx;
+		const layout = this.layoutCache;
+		if (!ctx || !layout) return;
+
+		// Map normalised cursor (0-1) to video sprite local coords,
+		// then to stage coords via cameraContainer transform.
+		const baseScale = layout.baseScale;
+		const videoW = this.config.videoWidth;
+		const videoH = this.config.videoHeight;
+
+		// videoSprite position within videoContainer
+		const { cropRegion } = this.config;
+		const cropPixelX = cropRegion.x * videoW * baseScale;
+		const cropPixelY = cropRegion.y * videoH * baseScale;
+
+		const croppedVideoW = videoW * cropRegion.width;
+		const croppedVideoH = videoH * cropRegion.height;
+		const croppedDisplayW = croppedVideoW * baseScale;
+		const croppedDisplayH = croppedVideoH * baseScale;
+		const coverOffsetX = (layout.maskRect.width - croppedDisplayW) / 2;
+		const coverOffsetY = (layout.maskRect.height - croppedDisplayH) / 2;
+
+		const spriteX = -cropPixelX + coverOffsetX;
+		const spriteY = -cropPixelY + coverOffsetY;
+
+		// Cursor in videoContainer local coords
+		const localX = cx * videoW * baseScale + spriteX;
+		const localY = cy * videoH * baseScale + spriteY;
+
+		// videoContainer → cameraContainer → stage
+		const camX = localX + layout.maskRect.x;
+		const camY = localY + layout.maskRect.y;
+
+		const state = this.animationState;
+		const stageX = camX * state.appliedScale + state.x;
+		const stageY = camY * state.appliedScale + state.y;
+
+		// Parse highlight colour
+		const hex = CURSOR_HIGHLIGHT_COLOR;
+		const r = Number.parseInt(hex.slice(1, 3), 16);
+		const g = Number.parseInt(hex.slice(3, 5), 16);
+		const b = Number.parseInt(hex.slice(5, 7), 16);
+		// Scale radius by export/preview ratio so it matches the live preview size
+		const previewWidth = this.config.previewWidth || 1920;
+		const previewHeight = this.config.previewHeight || 1080;
+		const scaleX = this.config.width / previewWidth;
+		const scaleY = this.config.height / previewHeight;
+		const scaleFactor = (scaleX + scaleY) / 2;
+		const radius = CURSOR_HIGHLIGHT_RADIUS * scaleFactor;
+
+		// Filled circle
+		ctx.save();
+		ctx.beginPath();
+		ctx.arc(stageX, stageY, radius, 0, Math.PI * 2);
+		ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
+		ctx.fill();
+		// Ring stroke
+		ctx.beginPath();
+		ctx.arc(stageX, stageY, radius, 0, Math.PI * 2);
+		ctx.strokeStyle = `rgba(${r},${g},${b},0.45)`;
+		ctx.lineWidth = 2 * scaleFactor;
+		ctx.stroke();
+		ctx.restore();
 	}
 
 	private compositeWithShadows(webcamFrame?: VideoFrame | null): void {

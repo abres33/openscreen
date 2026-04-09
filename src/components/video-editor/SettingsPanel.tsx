@@ -221,6 +221,8 @@ interface SettingsPanelProps {
 	webcamSizePreset?: WebcamSizePreset;
 	onWebcamSizePresetChange?: (size: WebcamSizePreset) => void;
 	onWebcamSizePresetCommit?: () => void;
+	cursorHighlightEnabled?: boolean;
+	onCursorHighlightChange?: (enabled: boolean) => void;
 }
 
 export default SettingsPanel;
@@ -297,6 +299,8 @@ export function SettingsPanel({
 	webcamSizePreset = DEFAULT_WEBCAM_SIZE_PRESET,
 	onWebcamSizePresetChange,
 	onWebcamSizePresetCommit,
+	cursorHighlightEnabled = false,
+	onCursorHighlightChange,
 }: SettingsPanelProps) {
 	const t = useScopedT("settings");
 	const [wallpaperPaths, setWallpaperPaths] = useState<string[]>([]);
@@ -889,6 +893,16 @@ export function SettingsPanel({
 									<Switch
 										checked={showBlur}
 										onCheckedChange={onBlurChange}
+										className="data-[state=checked]:bg-[#34B27B] scale-90"
+									/>
+								</div>
+								<div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+									<div className="text-[10px] font-medium text-slate-300">
+										{t("effects.cursorHighlight")}
+									</div>
+									<Switch
+										checked={cursorHighlightEnabled}
+										onCheckedChange={onCursorHighlightChange}
 										className="data-[state=checked]:bg-[#34B27B] scale-90"
 									/>
 								</div>

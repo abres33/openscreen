@@ -38,6 +38,7 @@ export interface EditorState {
 	webcamMaskShape: WebcamMaskShape;
 	webcamSizePreset: WebcamSizePreset;
 	webcamPosition: WebcamPosition | null;
+	cursorHighlightEnabled: boolean;
 }
 
 export const INITIAL_EDITOR_STATE: EditorState = {
@@ -57,6 +58,7 @@ export const INITIAL_EDITOR_STATE: EditorState = {
 	webcamMaskShape: DEFAULT_WEBCAM_MASK_SHAPE,
 	webcamSizePreset: DEFAULT_WEBCAM_SIZE_PRESET,
 	webcamPosition: DEFAULT_WEBCAM_POSITION,
+	cursorHighlightEnabled: false,
 };
 
 type StateUpdate = Partial<EditorState> | ((prev: EditorState) => Partial<EditorState>);

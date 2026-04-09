@@ -41,6 +41,11 @@ export interface CursorTelemetryPoint {
 	cy: number;
 }
 
+/** Default radius (in CSS px at 1× zoom) for the cursor highlight circle. */
+export const CURSOR_HIGHLIGHT_RADIUS = 20;
+/** Default colour for the cursor highlight (OpenScreen red). */
+export const CURSOR_HIGHLIGHT_COLOR = "#EF4444";
+
 export interface TrimRegion {
 	id: string;
 	startMs: number;

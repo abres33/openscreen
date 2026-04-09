@@ -49,6 +49,7 @@ interface GifExporterConfig {
 	previewWidth?: number;
 	previewHeight?: number;
 	cursorTelemetry?: import("@/components/video-editor/types").CursorTelemetryPoint[];
+	cursorHighlightEnabled?: boolean;
 	onProgress?: (progress: ExportProgress) => void;
 }
 
@@ -153,6 +154,7 @@ export class GifExporter {
 				previewWidth: this.config.previewWidth,
 				previewHeight: this.config.previewHeight,
 				cursorTelemetry: this.config.cursorTelemetry,
+				cursorHighlightEnabled: this.config.cursorHighlightEnabled,
 			});
 			await this.renderer.initialize();
 
